@@ -10,9 +10,15 @@ import ReferralProgram from "@/components/layout/referral-program"
 import TrustFeatures from "@/components/layout/trust-features"
 import Footer from "@/components/layout/footer"
 import PageLoader from "@/components/common/page-loader"
+import AuthModal from "@/components/common/auth-modal"
+import { useAuth } from "@/lib/providers/auth-provider"
+
+
+
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
+  const { isLoginModalOpen, isSignUpModalOpen, closeLoginModal, closeSignUpModal } = useAuth()
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -35,6 +41,9 @@ export default function HomePage() {
         <ReferralProgram />
         <TrustFeatures />
         <Footer />
+
+        <AuthModal isOpen={isLoginModalOpen} onClose={closeLoginModal} type="login" />
+        <AuthModal isOpen={isSignUpModalOpen} onClose={closeSignUpModal} type="signup" />
       </main>
     </>
   )

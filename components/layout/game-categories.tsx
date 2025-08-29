@@ -30,22 +30,22 @@ export default function GameCategories() {
 </div>
 
                 {/* Title */}
-                <h3 className="text-2xl font-bold text-white mb-6">{category.title}</h3>
+                <h3 className="text-3xl font-bold tracking-wide text-white ">{category.title}</h3>
 
                 {/* Stake Amount */}
-                <div className="mb-2">
+                <div className="">
                   <p className="text-white text-sm uppercase tracking-wide">STAKE</p>
-                  <p className="text-white text-3xl font-bold">{category.stake}</p>
+                  <p className="text-white text-3xl font-extrabold ">{category.stake}</p>
                 </div>
 
                 {/* To Win Amount */}
-                <div className="mb-6">
+                <div className="mb-4">
                   <p className="text-white text-sm uppercase tracking-wide">TO WIN</p>
-                  <p className={`text-4xl font-bold ${category.winColor}`}>{category.toWin}</p>
+                  <p className={`text-4xl font-extrabold ${category.winColor}`}>{category.toWin}</p>
                 </div>
 
                 {/* Stats */}
-                <div className="bg-[#E5E7EB]/20 p-6 rounded-lg text-white text-sm mb-6 space-y-2">
+                <div className="bg-[#E5E7EB]/20 p-6 rounded-lg text-white text-sm  space-y-2">
   {/* Row 1 */}
   <div className="flex justify-between items-center">
     <span className="text-gray-200">Min. Stake:</span>
@@ -61,7 +61,7 @@ export default function GameCategories() {
 
 
                 {/* Stake Button */}
-                <Button className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                <Button className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-7 px-6 rounded-lg transition-colors duration-200">
                   <BtnIcon className="w-4 h-4 mr-2 inline fill-black" />
                   Stake Now
                 </Button>

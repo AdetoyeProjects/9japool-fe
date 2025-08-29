@@ -15,8 +15,8 @@ export const howItWorksSteps: StepData[] = [
   },
   {
     number: "3",
-    title: "Stake More, Win More",
-    description: "Increase your stake for a bigger reward",
+    title: "Play More, Win More",
+    description: "The more you play the better your chances of winning",
     bgColor: "bg-gradient-to-r from-[#EAB308] to-[#DC2626]",
   },
 ]
