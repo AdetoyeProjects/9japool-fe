@@ -42,12 +42,12 @@ export class AuthService {
         referralCode: signUpData.referralCode || "",
       }
 
-      console.log("[v0] Signup API URL:", API_ENDPOINTS.AUTH.SIGNUP)
-      console.log("[v0] Signup payload:", apiPayload)
+      console.log("Signup API URL:", API_ENDPOINTS.AUTH.SIGNUP)
+      console.log("Signup payload:", apiPayload)
 
       const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGNUP, apiPayload)
 
-      console.log("[v0] Signup response:", response.data)
+      console.log("Signup response:", response.data)
 
       if (response.data) {
         this.storeTokens(response.data.tokens)
@@ -56,7 +56,7 @@ export class AuthService {
 
       throw new Error("Sign up failed")
     } catch (error: any) {
-      console.log("[v0] Signup error details:", {
+      console.log(" Signup error details:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
