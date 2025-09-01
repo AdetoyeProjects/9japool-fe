@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   generator: "v0.app",
 }
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'https://ninejapool-be.onrender.com/'
+  process.env.NEXT_PUBLIC_API_URL
 
 export const API_CONFIG = {
   baseURL: API_URL,
