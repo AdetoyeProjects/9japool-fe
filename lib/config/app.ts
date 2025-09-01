@@ -4,7 +4,7 @@ export const appConfig = {
   name: "9jaPool",
   description: "Nigeria's most trusted online lottery platform",
   url: "https://9japool.com",
-  ogImage: "/og-image.png",
+  ogImage: "/assets/icons/9japool.png",
 } as const
 
 export const metadata: Metadata = {
@@ -30,7 +30,6 @@ export const metadata: Metadata = {
     description: appConfig.description,
     creator: "@9japool",
   },
-  generator: "v0.app",
 }
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL
