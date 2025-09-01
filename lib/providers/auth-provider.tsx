@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoginModalOpen(true)
-    }, 6000) // 60 seconds
+    }, 8000) // 60 seconds
 
     return () => clearTimeout(timer)
   }, [])
