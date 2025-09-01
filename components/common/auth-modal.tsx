@@ -1,13 +1,14 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { X, Eye, EyeOff, Lock, Smartphone } from "lucide-react"
+import { X, Eye, EyeOff, Lock, Smartphone, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/lib/providers/auth-provider"
+import { useSignInMutation, useSignUpMutation } from "@/lib/hooks/use-auth-mutations"
+import { validateEmail, validatePassword } from "@/lib/helpers/validation"
 import Image from "next/image"
 
 interface AuthModalProps {
@@ -20,6 +21,7 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
   const { switchToSignUp, switchToLogin } = useAuth()
   const [loginType, setLoginType] = useState<"password" | "otp">("password")
   const [showPassword, setShowPassword] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -28,17 +30,82 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
     agreeToMarketing: false,
   })
 
+  const signInMutation = useSignInMutation()
+  const signUpMutation = useSignUpMutation()
+
   if (!isOpen) return null
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }))
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle form submission logic here
-    console.log("Form submitted:", formData)
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.email) {
+      newErrors.email = "Email is required"
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = "Please enter a valid email address"
+    }
+
+    if (type === "signup" || loginType === "password") {
+      if (!formData.password) {
+        newErrors.password = "Password is required"
+      } else if (type === "signup") {
+        const passwordValidation = validatePassword(formData.password)
+        if (!passwordValidation.isValid) {
+          newErrors.password = passwordValidation.errors[0]
+        }
+      }
+    }
+
+    if (type === "signup") {
+      if (!formData.agreeToTerms) {
+        newErrors.agreeToTerms = "You must agree to the terms and conditions"
+      }
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validateForm()) return
+
+    try {
+      if (type === "login") {
+        if (loginType === "otp") {
+          // Handle OTP login - you can implement this later
+          console.log("OTP login not implemented yet")
+          return
+        }
+
+        await signInMutation.mutateAsync({
+          email: formData.email,
+          userName: "", // Optional field as per requirements
+          password: formData.password,
+        })
+      } else {
+        await signUpMutation.mutateAsync({
+          email: formData.email,
+          password: formData.password,
+          referralCode: formData.referralCode || undefined,
+          agreeToTerms: formData.agreeToTerms,
+          agreeToMarketing: formData.agreeToMarketing,
+        })
+      }
+    } catch (error: any) {
+      setErrors({ submit: error.message || "An error occurred" })
+    }
+  }
+
+  const isLoading = signInMutation.isPending || signUpMutation.isPending
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in-0 duration-500">
@@ -68,7 +135,8 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-white/70 hover:text-white transition-all hover:scale-125 hover:rotate-90 z-10 animate-in zoom-in-0 duration-500 delay-500 cursor-pointer"
+              disabled={isLoading}
+              className="absolute top-4 right-4 text-white/70 hover:text-white transition-all hover:scale-125 hover:rotate-90 z-10 animate-in zoom-in-0 duration-500 delay-500 cursor-pointer disabled:opacity-50"
             >
               <X size={24} />
             </button>
@@ -76,94 +144,101 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
             {/* Form Header */}
             <div className="mb-6 flex-shrink-0">
               <h2 className="text-2xl font-extrabold text-white mb-4 tracking-wide animate-in slide-in-from-left-8 duration-600 delay-400">
-                {type === 'login' ? 'Sign In' : 'Sign Up'}
+                {type === "login" ? "Sign In" : "Sign Up"}
               </h2>
 
               {/* Login Type Tabs (only for login) */}
-              {type === 'login' && (
+              {type === "login" && (
                 <div className="flex space-x-2 mb-2 animate-in slide-in-from-left-6 duration-600 delay-500">
                   <button
-                    onClick={() => setLoginType('password')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-110 transform-gpu ${
-                      loginType === 'password'
-                        ? 'bg-[#232937] text-white shadow-lg scale-105'
-                        : 'bg-[#111827]/30 text-white/70 hover:text-white border-[#1F2937] hover:bg-[#232937]/50'
+                    type="button"
+                    onClick={() => setLoginType("password")}
+                    disabled={isLoading}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-110 transform-gpu disabled:opacity-50 ${
+                      loginType === "password"
+                        ? "bg-[#232937] text-white shadow-lg scale-105"
+                        : "bg-[#111827]/30 text-white/70 hover:text-white border-[#1F2937] hover:bg-[#232937]/50"
                     }`}
                   >
-                    <Lock
-                      size={16}
-                      className="transition-transform duration-300 group-hover:rotate-12"
-                    />
+                    <Lock size={16} />
                     <span>Password</span>
                   </button>
                   <button
-                    onClick={() => setLoginType('otp')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-110 transform-gpu ${
-                      loginType === 'otp'
-                        ? 'bg-[#232937] text-white shadow-lg scale-105'
-                        : 'bg-[#111827]/30 border-[#1F2937] text-white/70 hover:text-white hover:bg-[#232937]/50'
+                    type="button"
+                    onClick={() => setLoginType("otp")}
+                    disabled={isLoading}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-110 transform-gpu disabled:opacity-50 ${
+                      loginType === "otp"
+                        ? "bg-[#232937] text-white shadow-lg scale-105"
+                        : "bg-[#111827]/30 border-[#1F2937] text-white/70 hover:text-white hover:bg-[#232937]/50"
                     }`}
                   >
-                    <Smartphone
-                      size={16}
-                      className="transition-transform duration-300 group-hover:rotate-12"
-                    />
+                    <Smartphone size={16} />
                     <span>One-time Code</span>
                   </button>
                 </div>
               )}
             </div>
 
+            {/* Error Message */}
+            {errors.submit && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-red-400 text-sm">{errors.submit}</p>
+              </div>
+            )}
+
             {/* Form */}
-            <form
-              onSubmit={handleSubmit}
-              className="flex-1 flex flex-col justify-between"
-            >
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
               <div className="space-y-4 mt-[-20px] animate-in slide-in-from-right-8 duration-700 delay-600">
-                {/* Email/Phone Input */}
+                {/* Email Input */}
                 <div className="animate-in slide-in-from-right-4 duration-500 delay-700">
                   <Input
-                    type="text"
-                    placeholder="Email/Phone Number"
+                    type="email"
+                    placeholder="Email Address"
                     value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="bg-[#232937] border-[#3a4553] text-white placeholder:text-[#9CA3AF] h-12 transition-all duration-300 focus:scale-105 focus:shadow-2xl focus:shadow-[#0FA958]/20 focus:border-[#0FA958] hover:border-[#3a4553]/80 hover:scale-[1.02] transform-gpu"
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    disabled={isLoading}
+                    className={`bg-[#232937] border-[#3a4553] text-white placeholder:text-[#9CA3AF] h-12 transition-all duration-300 focus:scale-105 focus:shadow-2xl focus:shadow-[#0FA958]/20 focus:border-[#0FA958] hover:border-[#3a4553]/80 hover:scale-[1.02] transform-gpu disabled:opacity-50 ${
+                      errors.email ? "border-red-500" : ""
+                    }`}
                   />
+                  {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
                 </div>
 
                 {/* Password Input (only for password login and signup) */}
-                {(type === 'signup' || loginType === 'password') && (
+                {(type === "signup" || loginType === "password") && (
                   <div className="relative animate-in slide-in-from-right-4 duration-500 delay-800">
                     <Input
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       placeholder="Password"
                       value={formData.password}
-                      onChange={(e) =>
-                        handleInputChange('password', e.target.value)
-                      }
-                      className="bg-[#232937] border-[#3a4553] text-white placeholder:text-white/50 h-12 pr-12 transition-all duration-300 focus:scale-105 focus:shadow-2xl focus:shadow-[#0FA958]/20 focus:border-[#0FA958] hover:border-[#3a4553]/80 hover:scale-[1.02] transform-gpu"
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      disabled={isLoading}
+                      className={`bg-[#232937] border-[#3a4553] text-white placeholder:text-white/50 h-12 pr-12 transition-all duration-300 focus:scale-105 focus:shadow-2xl focus:shadow-[#0FA958]/20 focus:border-[#0FA958] hover:border-[#3a4553]/80 hover:scale-[1.02] transform-gpu disabled:opacity-50 ${
+                        errors.password ? "border-red-500" : ""
+                      }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-all duration-300 hover:scale-125 hover:rotate-12 transform-gpu"
+                      disabled={isLoading}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-all duration-300 hover:scale-125 hover:rotate-12 transform-gpu disabled:opacity-50"
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
+                    {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
                   </div>
                 )}
 
                 {/* OTP Message (only for OTP login) */}
-                {type === 'login' && loginType === 'otp' && (
+                {type === "login" && loginType === "otp" && (
                   <div className="h-16 flex items-center justify-center mt-[-20px] animate-in fade-in-0 slide-in-from-bottom-4 duration-500 delay-700">
-                    <p className="text-white text-sm text-center">
-                      We&apos;ll send a 6-digit code to your device
-                    </p>
+                    <p className="text-white text-sm text-center">We&apos;ll send a 6-digit code to your device</p>
                   </div>
                 )}
 
                 {/* Referral Code (only for signup) */}
-                {type === 'signup' && (
+                {type === "signup" && (
                   <div className="animate-in slide-in-from-right-4 duration-500 delay-900">
                     <details className="group">
                       <summary className="text-white/70 text-sm cursor-pointer hover:text-white transition-all duration-300 hover:translate-x-2 transform-gpu">
@@ -174,10 +249,9 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
                           type="text"
                           placeholder="Referral/Promo Code"
                           value={formData.referralCode}
-                          onChange={(e) =>
-                            handleInputChange('referralCode', e.target.value)
-                          }
-                          className="bg-[#232937] border-[#3a4553] text-white placeholder:text-white/50 h-12 transition-all duration-300 focus:scale-105 focus:shadow-2xl focus:shadow-[#0FA958]/20 focus:border-[#0FA958] transform-gpu"
+                          onChange={(e) => handleInputChange("referralCode", e.target.value)}
+                          disabled={isLoading}
+                          className="bg-[#232937] border-[#3a4553] text-white placeholder:text-white/50 h-12 transition-all duration-300 focus:scale-105 focus:shadow-2xl focus:shadow-[#0FA958]/20 focus:border-[#0FA958] transform-gpu disabled:opacity-50"
                         />
                       </div>
                     </details>
@@ -185,42 +259,38 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
                 )}
 
                 {/* Checkboxes (only for signup) */}
-                {type === 'signup' && (
+                {type === "signup" && (
                   <div className="space-y-2 mb-4 animate-in slide-in-from-right-4 duration-500 delay-1000">
                     <div className="flex items-start space-x-3 animate-in slide-in-from-left-2 duration-400 delay-1100">
                       <Checkbox
                         id="terms"
                         checked={formData.agreeToTerms}
-                        onCheckedChange={(checked) =>
-                          handleInputChange('agreeToTerms', checked as boolean)
-                        }
-                        className="mt-1 border-[#3a4553] data-[state=checked]:bg-[#0FA958] data-[state=checked]:border-[#0FA958] transition-all duration-300 hover:scale-125 transform-gpu"
+                        onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked as boolean)}
+                        disabled={isLoading}
+                        className="mt-1 border-[#3a4553] data-[state=checked]:bg-[#0FA958] data-[state=checked]:border-[#0FA958] transition-all duration-300 hover:scale-125 transform-gpu disabled:opacity-50"
                       />
                       <label
                         htmlFor="terms"
                         className="text-[12px] text-white leading-relaxed hover:text-white/80 transition-all duration-300 hover:translate-x-1 transform-gpu"
                       >
-                        I agree to the{' '}
+                        I agree to the{" "}
                         <a
                           href="#"
                           className="text-[#0FA958] hover:underline transition-all duration-300 hover:text-green-400 hover:scale-105 inline-block transform-gpu"
                         >
                           User Agreement
-                        </a>{' '}
+                        </a>{" "}
                         & confirm I am at least 18 years old
                       </label>
                     </div>
+                    {errors.agreeToTerms && <p className="text-red-400 text-xs ml-6">{errors.agreeToTerms}</p>}
                     <div className="flex items-start space-x-3 animate-in slide-in-from-left-2 duration-400 delay-1200">
                       <Checkbox
                         id="marketing"
                         checked={formData.agreeToMarketing}
-                        onCheckedChange={(checked) =>
-                          handleInputChange(
-                            'agreeToMarketing',
-                            checked as boolean
-                          )
-                        }
-                        className="mt-1 border-[#3a4553] data-[state=checked]:bg-[#0FA958] data-[state=checked]:border-[#0FA958] transition-all duration-300 hover:scale-125 transform-gpu"
+                        onCheckedChange={(checked) => handleInputChange("agreeToMarketing", checked as boolean)}
+                        disabled={isLoading}
+                        className="mt-1 border-[#3a4553] data-[state=checked]:bg-[#0FA958] data-[state=checked]:border-[#0FA958] transition-all duration-300 hover:scale-125 transform-gpu disabled:opacity-50"
                       />
                       <label
                         htmlFor="marketing"
@@ -233,7 +303,7 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
                 )}
 
                 {/* Forgot Password (only for password login) */}
-                {type === 'login' && loginType === 'password' && (
+                {type === "login" && loginType === "password" && (
                   <div className="text-right animate-in slide-in-from-right-2 duration-400 delay-900">
                     <a
                       href="#"
@@ -250,25 +320,32 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
                 {/* Submit Button */}
                 <Button
                   type="submit"
-                  className="w-full bg-[#0FA958] hover:bg-green-600 text-white h-12 text-base font-medium transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#0FA958]/30 active:scale-95 transform-gpu animate-in zoom-in-95 duration-500 delay-1000"
+                  disabled={isLoading}
+                  className="w-full bg-[#0FA958] hover:bg-green-600 text-white h-12 text-base font-medium transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#0FA958]/30 active:scale-95 transform-gpu animate-in zoom-in-95 duration-500 delay-1000 disabled:opacity-50"
                 >
-                  {type === 'login' ? 'Sign In' : 'Sign Up'}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {type === "login" ? "Signing In..." : "Signing Up..."}
+                    </>
+                  ) : type === "login" ? (
+                    "Sign In"
+                  ) : (
+                    "Sign Up"
+                  )}
                 </Button>
 
                 {/* Switch Auth Type */}
                 <div className="text-left animate-in fade-in-0 duration-500 delay-1100">
                   <span className="text-white text-[12px] font-extrabold tracking-wide">
-                    {type === 'login'
-                      ? 'New to 9jaPool? '
-                      : 'Already have an account? '}
+                    {type === "login" ? "New to 9jaPool? " : "Already have an account? "}
                     <button
                       type="button"
-                      onClick={
-                        type === 'login' ? switchToSignUp : switchToLogin
-                      }
-                      className="text-[#0FA958] hover:underline transition-all duration-300 hover:text-green-400 hover:translate-x-2 inline-block transform-gpu hover:scale-105"
+                      onClick={type === "login" ? switchToSignUp : switchToLogin}
+                      disabled={isLoading}
+                      className="text-[#0FA958] hover:underline transition-all duration-300 hover:text-green-400 hover:translate-x-2 inline-block transform-gpu hover:scale-105 disabled:opacity-50"
                     >
-                      {type === 'login' ? 'Create account' : 'Sign In'}
+                      {type === "login" ? "Create account" : "Sign In"}
                     </button>
                   </span>
                 </div>
@@ -287,13 +364,10 @@ export default function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full bg-white hover:bg-gray-50 text-black border-gray-300 h-12 text-base font-extrabold transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95 transform-gpu animate-in zoom-in-95 duration-500 delay-1300"
+                  disabled={isLoading}
+                  className="w-full bg-white hover:bg-gray-50 text-black border-gray-300 h-12 text-base font-extrabold transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95 transform-gpu animate-in zoom-in-95 duration-500 delay-1300 disabled:opacity-50"
                 >
-                  <img
-                    src="/assets/images/google.png"
-                    alt="Google"
-                    className="w-5 h-5 mr-2"
-                  />
+                  <img src="/assets/images/google.png" alt="Google" className="w-5 h-5 mr-2" />
                   Continue with Google
                 </Button>
               </div>

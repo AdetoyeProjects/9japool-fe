@@ -11,6 +11,7 @@ import TrustFeatures from "@/components/layout/trust-features"
 import Footer from "@/components/layout/footer"
 import PageLoader from "@/components/common/page-loader"
 import AuthModal from "@/components/common/auth-modal"
+import VerifyEmailModal from '@/components/common/verify-email-modal'
 import { useAuth } from "@/lib/providers/auth-provider"
 
 
@@ -18,7 +19,15 @@ import { useAuth } from "@/lib/providers/auth-provider"
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
-  const { isLoginModalOpen, isSignUpModalOpen, closeLoginModal, closeSignUpModal } = useAuth()
+  const {
+    isLoginModalOpen,
+    isSignUpModalOpen,
+    isVerifyEmailModalOpen,
+    verificationEmail,
+    closeLoginModal,
+    closeSignUpModal,
+    closeVerifyEmailModal,
+  } = useAuth()
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -42,8 +51,21 @@ export default function HomePage() {
         <TrustFeatures />
         <Footer />
 
-        <AuthModal isOpen={isLoginModalOpen} onClose={closeLoginModal} type="login" />
-        <AuthModal isOpen={isSignUpModalOpen} onClose={closeSignUpModal} type="signup" />
+        <AuthModal
+          isOpen={isLoginModalOpen}
+          onClose={closeLoginModal}
+          type="login"
+        />
+        <AuthModal
+          isOpen={isSignUpModalOpen}
+          onClose={closeSignUpModal}
+          type="signup"
+        />
+        <VerifyEmailModal
+          isOpen={isVerifyEmailModalOpen}
+          onClose={closeVerifyEmailModal}
+          email={verificationEmail}
+        />
       </main>
     </>
   )
