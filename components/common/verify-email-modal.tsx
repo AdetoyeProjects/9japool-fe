@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { X, Mail, Loader2, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/providers/auth-provider'
@@ -23,20 +23,13 @@ export default function VerifyEmailModal({
   email,
 }: VerifyEmailModalProps) {
   const { closeModal } = useAuth()
-  const [step, setStep] = useState<'request' | 'verify'>('request')
+  const [step, setStep] = useState<'request' | 'verify'>('verify')
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const requestVerificationMutation = useRequestVerificationMutation()
   const verifyEmailMutation = useVerifyEmailMutation()
-
-  useEffect(() => {
-    if (isOpen && step === 'request') {
-      // Auto-request verification code when modal opens
-      handleRequestCode()
-    }
-  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -45,6 +38,7 @@ export default function VerifyEmailModal({
       await requestVerificationMutation.mutateAsync({ email })
       setStep('verify')
       setErrors({})
+      setCode(['', '', '', '', '', ''])
     } catch (error: any) {
       setErrors({ submit: error.message || 'Failed to send verification code' })
     }
@@ -110,10 +104,12 @@ export default function VerifyEmailModal({
         token: verificationCode,
       })
 
+      setCode(['', '', '', '', '', ''])
       // Close modal and redirect will be handled by the mutation success
       closeModal()
     } catch (error: any) {
       setErrors({ submit: error.message || 'Invalid verification code' })
+      setCode(['', '', '', '', '', ''])
     }
   }
 

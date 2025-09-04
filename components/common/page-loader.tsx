@@ -2,14 +2,20 @@
 
 import { cn } from '@/lib/utils'
 import Loader from './loader'
+import { useAuthStore } from '@/lib/store/auth'
 
 interface PageLoaderProps {
-  isLoading: boolean
+  isLoading?: boolean
   className?: string
+  isVisible?: boolean
+  message?: string
 }
 
 const PageLoader = ({ isLoading, className }: PageLoaderProps) => {
-  if (!isLoading) return null
+  const { showLoader } = useAuthStore()
+  const shouldShow = isLoading !== undefined ? isLoading : showLoader
+
+  if (!shouldShow) return null
 
   return (
     <div

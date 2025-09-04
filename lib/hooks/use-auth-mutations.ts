@@ -14,8 +14,9 @@ import { useRouter } from 'next/navigation'
 
 export function useSignInMutation() {
   const queryClient = useQueryClient()
-  const { setUser, setLoading } = useAuthStore()
+  const { setUser, setLoading, setShowLoader } = useAuthStore()
   const { closeLoginModal } = useAuth()
+  const router = useRouter()
 
   return useMutation({
     mutationFn: (credentials: SignInRequest) => authService.signIn(credentials),
@@ -25,7 +26,14 @@ export function useSignInMutation() {
     onSuccess: (data) => {
       setUser(data.user)
       closeLoginModal()
+      setShowLoader(true)
       queryClient.invalidateQueries({ queryKey: ['user'] })
+
+      setTimeout(() => {
+        setShowLoader(false)
+        setLoading(false)
+        router.push('/sports')
+      }, 2000)
     },
     onError: (error) => {
       console.error('Sign in error:', error)
@@ -105,7 +113,8 @@ export function useRequestVerificationMutation() {
 
 export function useVerifyEmailMutation() {
   const queryClient = useQueryClient()
-  const { setUser, setLoading } = useAuthStore()
+  const { setUser, setLoading, setShowLoader } = useAuthStore()
+  const { closeVerifyEmailModal } = useAuth()
   const router = useRouter()
 
   return useMutation({
@@ -115,12 +124,15 @@ export function useVerifyEmailMutation() {
     },
     onSuccess: (data) => {
       setUser(data.user)
+      closeVerifyEmailModal()
+      setShowLoader(true)
       queryClient.invalidateQueries({ queryKey: ['user'] })
-      if (typeof window !== 'undefined') {
-        window.location.href = 'https://sports.9japool.com'
-      } else {
+
+      setTimeout(() => {
+        setShowLoader(false)
+        setLoading(false)
         router.push('/sports')
-      }
+      }, 4000)
     },
     onError: (error) => {
       console.error('Verify email error:', error)

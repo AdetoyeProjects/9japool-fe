@@ -1,7 +1,9 @@
 export interface LoaderProps {
-  size?: "sm" | "md" | "lg"
-  variant?: "default" | "minimal" | "pulse"
+  size?: 'sm' | 'md' | 'lg'
+  variant?: 'default' | 'minimal' | 'pulse'
   className?: string
+  isVisible?: boolean
+  message?: string
 }
 
 export interface LoaderBallProps {

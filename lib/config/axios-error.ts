@@ -11,9 +11,15 @@ export const handleAxiosError = (error: AxiosError): ApiError => {
   if (error.response) {
     // Server responded with error status
     const { status, data } = error.response
+
+    const errorMessage =
+      (data as any)?.error || (data as any)?.message || 'An error occurred'
+
+    const statusCode = (data as any)?.statusCode || status
+
     return {
-      message: (data as any)?.message || 'An error occurred',
-      status,
+      message: errorMessage,
+      status: statusCode,
       code: (data as any)?.code,
       details: data,
     }

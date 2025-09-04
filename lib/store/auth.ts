@@ -6,10 +6,12 @@ interface AuthState {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
+  showLoader: boolean
 
   // Actions
   setUser: (user: User | null) => void
   setLoading: (loading: boolean) => void
+  setShowLoader: (show: boolean) => void
   signOut: () => void
   updateUser: (updates: Partial<User>) => void
   checkAuth: () => void
@@ -21,6 +23,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      showLoader: false,
 
       setUser: (user) =>
         set({
@@ -29,6 +32,8 @@ export const useAuthStore = create<AuthState>()(
         }),
 
       setLoading: (loading) => set({ isLoading: loading }),
+
+      setShowLoader: (show) => set({ showLoader: show }),
 
       signOut: () =>
         set({

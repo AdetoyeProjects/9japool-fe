@@ -1,29 +1,31 @@
-import { apiClient } from "@/lib/config/axios-instance"
-import { handleAxiosError } from "@/lib/config/axios-error"
-import { API_ENDPOINTS } from "@/lib/constants/api"
+import { apiClient } from '@/lib/config/axios-instance'
+import { handleAxiosError } from '@/lib/config/axios-error'
+import { API_ENDPOINTS } from '@/lib/constants/api'
 import type {
   SignInRequest,
   SignUpRequest,
   AuthResponse,
   VerifyEmailRequest,
   RequestVerificationRequest,
-} from "@/lib/types/auth"
+} from '@/lib/types/auth'
 
 export class AuthService {
   async signIn(credentials: SignInRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGNIN, {
-        email: credentials.email,
-        userName: credentials.userName || "",
-        password: credentials.password,
-      })
+      const response = await apiClient.post<AuthResponse>(
+        API_ENDPOINTS.AUTH.SIGNIN,
+        {
+          email: credentials.email,
+          password: credentials.password,
+        }
+      )
 
       if (response.data) {
         this.storeTokens(response.data.tokens)
         return response.data
       }
 
-      throw new Error("Sign in failed")
+      throw new Error('Sign in failed')
     } catch (error: any) {
       const apiError = handleAxiosError(error)
       throw new Error(apiError.message)
@@ -36,36 +38,22 @@ export class AuthService {
 
       const apiPayload = {
         email: signUpData.email,
-        name: "", // Required by API but not collected in form
-        userName: "", // Required by API but not collected in form
         password: signUpData.password,
-        referralCode: signUpData.referralCode || "",
+        referralCode: signUpData.referralCode || '',
       }
 
-      console.log("Signup API URL:", API_ENDPOINTS.AUTH.SIGNUP)
-      console.log("Signup payload:", apiPayload)
-
-      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGNUP, apiPayload)
-
-      console.log("Signup response:", response.data)
+      const response = await apiClient.post<AuthResponse>(
+        API_ENDPOINTS.AUTH.SIGNUP,
+        apiPayload
+      )
 
       if (response.data) {
-        this.storeTokens(response.data.tokens)
         return response.data
       }
 
-      throw new Error("Sign up failed")
+      throw new Error('Sign up failed')
     } catch (error: any) {
-      console.log(" Signup error details:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          data: error.config?.data,
-        },
-      })
+      console.error('Signup error:', error.message)
 
       const apiError = handleAxiosError(error)
       throw new Error(apiError.message)
@@ -76,7 +64,7 @@ export class AuthService {
     try {
       await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT)
     } catch (error) {
-      console.error("Logout error:", error)
+      console.error('Logout error:', error)
     } finally {
       this.clearTokens()
     }
@@ -105,7 +93,9 @@ export class AuthService {
     }
   }
 
-  async requestEmailVerification(data: RequestVerificationRequest): Promise<void> {
+  async requestEmailVerification(
+    data: RequestVerificationRequest
+  ): Promise<void> {
     try {
       await apiClient.post(API_ENDPOINTS.AUTH.REQUEST_VERIFICATION, {
         email: data.email,
@@ -118,40 +108,51 @@ export class AuthService {
 
   async verifyEmail(data: VerifyEmailRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.VERIFY_EMAIL, {
-        email: data.email,
-        token: data.token,
-      })
+      const response = await apiClient.post<AuthResponse>(
+        API_ENDPOINTS.AUTH.VERIFY_EMAIL,
+        {
+          email: data.email,
+          code: data.token,
+        }
+      )
 
       if (response.data) {
         this.storeTokens(response.data.tokens)
         return response.data
       }
 
-      throw new Error("Email verification failed")
+      throw new Error('Email verification failed')
     } catch (error: any) {
       const apiError = handleAxiosError(error)
       throw new Error(apiError.message)
     }
   }
 
-  private storeTokens(tokens: { accessToken: string; refreshToken: string }): void {
-    if (typeof window === "undefined") return
+  private storeTokens(tokens: {
+    accessToken: string
+    refreshToken: string
+  }): void {
+    if (typeof window === 'undefined') return
 
-    localStorage.setItem("auth_token", tokens.accessToken)
-    localStorage.setItem("refresh_token", tokens.refreshToken)
+    if (!tokens || !tokens.accessToken || !tokens.refreshToken) {
+      console.warn('Invalid tokens provided to storeTokens:', tokens)
+      return
+    }
+
+    localStorage.setItem('auth_token', tokens.accessToken)
+    localStorage.setItem('refresh_token', tokens.refreshToken)
   }
 
   private clearTokens(): void {
-    if (typeof window === "undefined") return
+    if (typeof window === 'undefined') return
 
-    localStorage.removeItem("auth_token")
-    localStorage.removeItem("refresh_token")
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('refresh_token')
   }
 
   getStoredToken(): string | null {
-    if (typeof window === "undefined") return null
-    return localStorage.getItem("auth_token")
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('auth_token')
   }
 
   isAuthenticated(): boolean {

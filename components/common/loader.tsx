@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils'
 import type { LoaderProps } from '@/lib/types/loader'
 import { useEffect, useRef } from 'react'
 
+
+
 const Loader = ({
   size = 'md',
   variant = 'default',
