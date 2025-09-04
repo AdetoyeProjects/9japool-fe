@@ -1,15 +1,12 @@
 'use client'
 
 import type React from 'react'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/auth'
-
-export function NavigationLoaderProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+import PageLoader from '@/components/common/page-loader'
+  
+function NavigationHandler() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { setShowLoader } = useAuthStore()
@@ -33,5 +30,20 @@ export function NavigationLoaderProvider({
     return () => clearTimeout(timer)
   }, [pathname, searchParams, setShowLoader])
 
-  return <>{children}</>
+  return null
+}
+
+export function NavigationLoaderProvider({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <>
+      <Suspense fallback={<PageLoader isLoading={true} />}>
+        <NavigationHandler />
+      </Suspense>
+      {children}
+    </>
+  )
 }

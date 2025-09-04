@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { X, Mail, Loader2, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/providers/auth-provider'
@@ -26,10 +26,19 @@ export default function VerifyEmailModal({
   const [step, setStep] = useState<'request' | 'verify'>('verify')
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [countdown, setCountdown] = useState(0)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const requestVerificationMutation = useRequestVerificationMutation()
   const verifyEmailMutation = useVerifyEmailMutation()
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+    }
+    return () => clearTimeout(timer)
+  }, [countdown])
 
   if (!isOpen) return null
 
@@ -39,6 +48,7 @@ export default function VerifyEmailModal({
       setStep('verify')
       setErrors({})
       setCode(['', '', '', '', '', ''])
+      setCountdown(60)
     } catch (error: any) {
       setErrors({ submit: error.message || 'Failed to send verification code' })
     }
@@ -256,17 +266,28 @@ export default function VerifyEmailModal({
                   )}
 
                   {/* Resend Code */}
+                  {/* Resend Code */}
                   <div className="text-center">
                     <p className="text-white/70 text-sm mb-2">
                       Didn&apos;t receive the code?
                     </p>
+
+                    {countdown > 0 && (
+                      <p className="text-white/50 text-xs mb-2">
+                        You can request another verification code in {countdown}{' '}
+                        seconds
+                      </p>
+                    )}
+
                     <button
                       type="button"
                       onClick={handleRequestCode}
-                      disabled={isLoading}
-                      className="text-[#0FA958] hover:text-green-400 text-sm font-medium transition-all duration-300 hover:scale-105 transform-gpu disabled:opacity-50"
+                      disabled={isLoading || countdown > 0}
+                      className="text-[#0FA958] hover:text-green-400 text-sm font-medium transition-all duration-300 hover:scale-105 transform-gpu disabled:opacity-50 disabled:text-white/50 cursor-pointer"
                     >
-                      Resend Code
+                      {countdown > 0
+                        ? `Resend Code (${countdown}s)`
+                        : 'Resend Code'}
                     </button>
                   </div>
                 </div>
@@ -276,7 +297,7 @@ export default function VerifyEmailModal({
                   <Button
                     type="submit"
                     disabled={isLoading || code.join('').length !== 6}
-                    className="w-full bg-[#0FA958] hover:bg-green-600 text-white h-12 text-base font-medium transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#0FA958]/30 active:scale-95 transform-gpu disabled:opacity-50"
+                    className="w-full bg-[#0FA958] hover:bg-green-600 text-white h-12 text-base font-medium transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#0FA958]/30 active:scale-95 transform-gpu disabled:opacity-50 cursor-pointer"
                   >
                     {isLoading ? (
                       <>
@@ -293,7 +314,7 @@ export default function VerifyEmailModal({
                       type="button"
                       onClick={() => setStep('request')}
                       disabled={isLoading}
-                      className="text-white/70 hover:text-white text-sm transition-all duration-300 hover:scale-105 transform-gpu disabled:opacity-50"
+                      className="text-white/70 hover:text-white text-sm transition-all duration-300 hover:scale-105 transform-gpu disabled:opacity-50 cursor-pointer"
                     >
                       ← Back to Email Check
                     </button>
