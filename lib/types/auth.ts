@@ -62,3 +62,7 @@ export interface VerifyEmailRequest {
   email: string
   token: string
 }
+export interface GoogleAuthRequest {
+  code: string
+  email: string
+}

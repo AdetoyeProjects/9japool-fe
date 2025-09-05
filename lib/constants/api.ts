@@ -8,6 +8,8 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/auth/reset-password',
     REQUEST_VERIFICATION: '/auth/verify-email/request',
     VERIFY_EMAIL: '/auth/verify-email',
+    GOOGLE: '/auth/google',
+    TOKEN_SIGN_IN: '/auth/token-sign-in',
   },
 } as const
 

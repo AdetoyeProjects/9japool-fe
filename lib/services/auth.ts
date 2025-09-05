@@ -7,6 +7,7 @@ import type {
   AuthResponse,
   VerifyEmailRequest,
   RequestVerificationRequest,
+  GoogleAuthRequest,
 } from '@/lib/types/auth'
 
 export class AuthService {
@@ -126,6 +127,34 @@ export class AuthService {
       const apiError = handleAxiosError(error)
       throw new Error(apiError.message)
     }
+  }
+
+  async googleSignIn(data: GoogleAuthRequest): Promise<AuthResponse> {
+    try {
+      const response = await apiClient.post<AuthResponse>(
+        API_ENDPOINTS.AUTH.TOKEN_SIGN_IN,
+        {
+          code: data.code,
+          email: data.email,
+        }
+      )
+
+      if (response.data) {
+        this.storeTokens(response.data.tokens)
+        return response.data
+      }
+
+      throw new Error('Google sign in failed')
+    } catch (error: any) {
+      const apiError = handleAxiosError(error)
+      throw new Error(apiError.message)
+    }
+  }
+
+  initiateGoogleAuth(): void {
+    const baseURL = process.env.NEXT_PUBLIC_API_URL
+    if (typeof window === 'undefined') return
+    window.location.href = `${baseURL}${API_ENDPOINTS.AUTH.GOOGLE}`
   }
 
   private storeTokens(tokens: {
